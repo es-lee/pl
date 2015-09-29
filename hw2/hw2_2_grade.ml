@@ -20,6 +20,10 @@ let rec c5 n =
 let rec c6 n =
   if n = 0 then NIL
   else MONE (ZERO (ONE (c6 (n-1))))
+let c7 = MONE (ZERO (ZERO (ZERO NIL)))
+let c8 =
+  ZERO (ONE (ONE (ZERO (MONE (ONE (ONE (ZERO (ONE (ZERO (MONE NIL))))))))))
+
 
 let _ = check (fun () -> crazy2val (crazy2add (c0, c0)) = 0)
 let _ = check (fun () -> crazy2val (crazy2add (c0, c1)) = 1)
@@ -61,3 +65,5 @@ let _ = check (fun () -> crazy2val (crazy2add (c5 4, c6 2)) = -58)
 let _ = check (fun () -> crazy2val (crazy2add (c6 3, c5 4)) = 134)
 let _ = check (fun () ->
   crazy2val (crazy2add (crazy2add (c5 4, c6 3), (crazy2add (c6 3, c5 5)))) = 12)
+
+let _ = check (fun () -> crazy2val (crazy2add (c7, c8)) = (-683))

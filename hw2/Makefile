@@ -1,4 +1,4 @@
-all: 1 2 3 4 5 clean
+all: 1 2 3 4 5 6 7 clean
 
 1: commonGrade.cmo hw2_1.cmo
 	ocaml commonGrade.cmo hw2_1.cmo hw2_1_grade.ml
@@ -17,6 +17,9 @@ all: 1 2 3 4 5 clean
 
 6: commonGrade.cmo hw2_6.cmo
 	ocaml commonGrade.cmo hw2_6.cmo hw2_6_grade.ml
+
+7: commonGrade.cmo hw2_7.cmo
+	ocaml commonGrade.cmo hw2_7.cmo hw2_7_grade.ml
 
 commonGrade.cmo:
 	ocamlc commonGrade.ml
@@ -38,6 +41,9 @@ hw2_5.cmo: hw2_5.ml
 
 hw2_6.cmo: hw2_6.ml
 	ocamlc hw2_6.ml
+
+hw2_7.cmo: hw2_7.ml
+	ocamlc hw2_7.ml
 
 clean:
 	rm -fr a.out *.cmo *.cmi
