@@ -205,6 +205,105 @@ struct
 
   let rec eval mem env e =
     match e with
+    | NUM v -> (Num v, mem)
+    | TRUE -> (Bool true, mem)
+    | FALSE -> (Bool false, mem)
+    | UNIT -> (Unit, mem)
+    | VAR x ->
+      let l = lookup_env_loc env x in
+      (Mem.load mem l, mem)
+    | ADD (e1, e2) ->
+      let (v1, m1) = eval mem env e1 in
+      let n1 = value_int v1 in
+      let (v2, m2) = eval m1 env e2 in
+      let n2 = value_int v2 in
+      (Num (n1 + n2), m2)
+    | SUB (e1, e2) ->
+      let (v1, m1) = eval mem env e1 in
+      let n1 = value_int v1 in
+      let (v2, m2) = eval m1 env e2 in
+      let n2 = value_int v2 in
+      (Num (n1 - n2), m2)
+    | MUL (e1, e2) ->
+      let (v1, m1) = eval mem env e1 in
+      let n1 = value_int v1 in
+      let (v2, m2) = eval m1 env e2 in
+      let n2 = value_int v2 in
+      (Num (n1 * n2), m2)
+    | DIV (e1, e2) ->
+      let (v1, m1) = eval mem env e1 in
+      let n1 = value_int v1 in
+      let (v2, m2) = eval m1 env e2 in
+      let n2 = value_int v2 in
+      (Num (n1 / n2), m2)
+    | EQUAL (e1, e2) ->
+      let (v1, m1) = eval mem env e1 in
+      let (v2, m2) = eval m1 env e2 in
+      (Bool (v1 = v2), m2)
+    | LESS (e1, e2) ->
+      let (v1, m1) = eval mem env e1 in
+      let n1 = value_int v1 in
+      let (v2, m2) = eval m1 env e2 in
+      let n2 = value_int v2 in
+      (Bool (n1 < n2), m2)
+    | NOT e ->
+      let (v, m') = eval mem env e in
+      let b = value_bool v in
+      (Bool (not b), m')
+    | SEQ (e1, e2) ->
+      let (v, m1) = eval mem env e1 in
+      eval m1 env e2
+    | IF (e, e1, e2) ->
+      let (v, m) = eval mem env e in
+      let b = value_bool v in
+      if b then (eval m env e1) else (eval m env e2)
+    | WHILE (e1, e2) ->
+      let (v, m) = eval mem env e1 in
+      let b = value_bool v in
+      if b then (let (v', m') = eval m env e2 in
+                 (eval m' env (WHILE (e1, e2)))
+                ) else (Unit, m)
+    | LETV (x, e1, e2) ->
+      let (v, mem') = eval mem env e1 in
+      let (l, mem'') = Mem.alloc mem' in
+      eval (Mem.store mem'' l v) (Env.bind env x (Addr l)) e2
+    | LETF (x, xl, e1, e2) ->
+      let env' = Env.bind env f (Proc (xl, e1, env)) in
+      eval mem env' e2
+    | CALLV (x, el) ->
+      let vl = [] in
+      let (vl_r, mem') =
+        List.fold_left (fun (vl, mem) e ->
+                        let (v, mem') = eval mem env e in
+                        (v::vl, mem')) (vl, mem) el in
+      let vl = List.rev vl_r in
+      let (id_lst, e', env') = lookup_env_proc env x in
+      let env'' =
+        Env.bind (List.fold_left (fun env id ->
+                        let (l, m) = Mem.alloc mem' in
+                        Env.bind env id (Addr l)) env' id_lst)
+                 x (Proc (id_lst, e', env')) in
+      if (List.length vl) = (List.length id_lst) then
+        let mem'' = (List.fold_left2 (fun mem x v ->
+                         let l = lookup_env_loc env'' x in
+                         Mem.store mem l v) mem' id_lst vl) in
+        eval mem'' env'' e'
+      else raise (Error "InvalidArg")
+      (*List.nth lst n*)
+    | CALLR (f, yl) ->
+      let (xl, e, env') = lookup_env_proc env f in
+      let env'' = Env.bind (List.fold_left2 (fun env' x y ->
+                    let l = lookup_env_proc env y in
+                    Env.bind env' x l) env' xl yl)
+                    f (Proc (xl, e, env')) in
+      eval mem env'' e
+    | RECORD rl ->
+    | FIELD
+    | ASSIGN (x, e) ->
+      let (v, mem') = eval mem env e in
+      let l = lookup_env_loc env x in
+      (v, Mem.store mem' l v)
+    | ASSIGNF
     | READ x ->
       let v = Num (read_int()) in
       let l = lookup_env_loc env x in
@@ -214,14 +313,6 @@ struct
       let n = value_int v in
       let _ = print_endline (string_of_int n) in
       (v, mem')
-    | LETV (x, e1, e2) ->
-      let (v, mem') = eval mem env e1 in
-      let (l, mem'') = Mem.alloc mem' in
-      eval (Mem.store mem'' l v) (Env.bind env x (Addr l)) e2
-    | ASSIGN (x, e) ->
-      let (v, mem') = eval mem env e in
-      let l = lookup_env_loc env x in
-      (v, Mem.store mem' l v)
     | _ -> failwith "Unimplemented" (* TODO : Implement rest of the cases *)
 
   let run (mem, env, pgm) =
