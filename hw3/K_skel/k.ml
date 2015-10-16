@@ -279,9 +279,9 @@ struct
       let vl = List.rev vl_r in
       let (id_lst, e', env') = lookup_env_proc env x in
       let env'' =
-        Env.bind (List.fold_left (fun env id ->
-                        let (l, m) = Mem.alloc mem' in
-                        Env.bind env id (Addr l)) env' id_lst)
+        Env.bind (List.fold_left (fun (env, mem) id ->
+                        let (l, m) = Mem.alloc mem in
+                        (Env.bind env id (Addr l), m)) (env', mem') id_lst)
                  x (Proc (id_lst, e', env')) in
       if (List.length vl) = (List.length id_lst) then
         let mem'' = (List.fold_left2 (fun mem x v ->
@@ -298,6 +298,15 @@ struct
                     f (Proc (xl, e, env')) in
       eval mem env'' e
     | RECORD rl ->
+      let vl = [] in
+      let (vl_r, mem') =
+        List.fold_left (fun (vl, mem) (id, e) ->
+                        let (v, mem') = eval mem env e in
+                        (v::vl, mem')) (vl, mem) rl in
+      let vl = List.rev vl_r in
+      let ll = List.fold_left (fun ll (id, e) ->
+                               let (l, m) = Mem.alloc
+      (Record (id -> Loc.t), mem)
     | FIELD
     | ASSIGN (x, e) ->
       let (v, mem') = eval mem env e in
