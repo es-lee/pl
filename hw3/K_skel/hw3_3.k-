@@ -77,22 +77,34 @@ q := enq(q, tree);
   else 2015)
   ))
 in
-(* 2015 *)
+2015
+(*
+let lf := leaf (2) in
+write (nodeVal (lf));
+let tr := makeLtree(1, (leaf (2))) in
+if isEmpty(rTree(tr)) then write (1) else write (0);
+let t1 := makeTree(1, leaf(2), leaf(3)) in
+let t0 := makeTree(0, t1, leaf(4)) in
+dft (t0);
+bft (t0)
+*)
+(*
 let l1 := leaf(1) in
 let l2 := leaf(2) in
 let t1 := makeTree(3, l1, l2) in
 let t2 := makeLtree(11, t1) in
 let t3 := makeRtree(19, leaf(39)) in
 let t4 := makeTree(27, t3, t2) in
-  let eq := emptyq(1) in
-  write 11111111;
-  if (isEmptyQ(eq)) then (write 1) else (write 2);
-  write 22222222;
-  t4;
-  eq;
-  write 33333333;
-  eq := enq(eq,t4);
-(*  write (nodeVal (deq (eq))); *)
 dft(t4);
-bft(t4)
+bft(t4);
 
+dft( makeTree( 1, makeTree (2, leaf(4), makeLtree(5, leaf(6))), makeTree( 3,
+        makeRtree( 7, makeRtree( 9, leaf(10))), leaf(8))));
+
+  dft(makeRtree(3, makeRtree(1, makeRtree(2, makeTree(6, leaf(4), leaf(5))))));
+
+  bft( makeTree( 1, makeTree (2, leaf(4), makeLtree(5, leaf(6))), makeTree( 3,
+          makeRtree( 7, makeRtree( 9, leaf(10))), leaf(8))));
+
+  bft(makeRtree(3, makeRtree(1, makeRtree(2, makeTree(6, leaf(4), leaf(5))))))
+*)
