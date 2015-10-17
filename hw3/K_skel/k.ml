@@ -314,12 +314,20 @@ struct
                           let l = lookup_env_loc recenv id in
                           Mem.store mem l v) mem_r rl vl in
       (Record (fun (x) -> (lookup_env_loc recenv) x), mem_r)
-    | FIELD
+    | FIELD (e, x) ->
+      let (r, m') = eval mem env e in
+      let record = value_record r in
+      (Mem.load m' (record x), m')
     | ASSIGN (x, e) ->
       let (v, mem') = eval mem env e in
       let l = lookup_env_loc env x in
       (v, Mem.store mem' l v)
-    | ASSIGNF
+    | ASSIGNF (e1, x, e2) ->
+      let (r, m1) = eval mem env e1 in
+      let (v, m2) = eval m1 env e2 in
+      let record = value_record r in
+      let l = record x in
+      (v, Mem.store m2 l v)
     | READ x ->
       let v = Num (read_int()) in
       let l = lookup_env_loc env x in
