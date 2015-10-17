@@ -1,0 +1,89 @@
+let empty := unit in
+let proc leaf(i) =
+{key:=i, left:=empty, right:=empty}
+in
+
+let proc makeLtree(i, ltree) =
+{key:=i, left:=ltree, right:=empty}
+in
+
+let proc makeRtree(i, rtree) =
+{key:=i, left:=empty, right:=rtree}
+in
+
+let proc makeTree(i, ltree, rtree) =
+{key:=i, left:=ltree, right:=rtree}
+in
+
+let proc isLeaf(tree) =
+if (tree.left = empty) then
+(if (tree.right = empty) then
+true else false)
+else false
+in
+
+let proc isEmpty(tree) =
+(tree = empty) in
+
+let proc rTree(tree) =
+tree.right
+in
+
+let proc lTree(tree) =
+tree.left
+in
+
+let proc nodeVal(tree) =
+tree.key
+in
+
+let proc dft(tree) =
+if isEmpty(tree) then unit
+else
+(
+(write tree.key);
+dft(lTree(tree));
+dft(rTree(tree))
+)
+in
+
+let proc emptyq(u) = {node := {}, queue := {}} in
+let proc isEmptyQ(q) = (q.key = {}) in
+let proc enq (q, tree) =
+if (isEmpty(tree)) then q
+else (if isEmptyQ(q) then
+(q.node := tree;
+ q.q = emptyq(1))
+else (q.queue := enq(q.enque, tree))
+);q
+in
+
+let proc deq (q) =
+if isEmptyQ(q) then unit
+else (let key := q.node in
+ q := q.queue;
+ key)
+in
+
+let proc bft(tree) =
+let q := emptyq(1) in
+q := enq(q, tree);
+(while (not isEmptyQ(q)) do
+ (let next := deq(q) in
+  (write next.value);
+  (if (not isEmpty(next)) then
+    q := enq(q, next.left);
+    q := enq(q, next.right)
+  else 2015)
+  ))
+in
+(* 2015 *)
+let l1 := leaf(1) in
+let l2 := leaf(2) in
+let t1 := makeTree(3, l1, l2) in
+let t2 := makeLtree(11, t1) in
+let t3 := makeRtree(19, leaf(39)) in
+let t4 := makeTree(27, t3, t2) in
+dft(t4);
+bft(t4)
+
