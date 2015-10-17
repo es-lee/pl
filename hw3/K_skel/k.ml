@@ -267,7 +267,7 @@ struct
       let (v, mem') = eval mem env e1 in
       let (l, mem'') = Mem.alloc mem' in
       eval (Mem.store mem'' l v) (Env.bind env x (Addr l)) e2
-    | LETF (x, xl, e1, e2) ->
+    | LETF (f, xl, e1, e2) ->
       let env' = Env.bind env f (Proc (xl, e1, env)) in
       eval mem env' e2
     | CALLV (x, el) ->
@@ -278,25 +278,25 @@ struct
                         (v::vl, mem')) (vl, mem) el in
       let vl = List.rev vl_r in
       let (id_lst, e', env') = lookup_env_proc env x in
-      let env'' =
-        Env.bind (List.fold_left (fun (env, mem) id ->
+      let (env, mem) = (List.fold_left (fun (env, mem) id ->
                         let (l, m) = Mem.alloc mem in
-                        (Env.bind env id (Addr l), m)) (env', mem') id_lst)
-                 x (Proc (id_lst, e', env')) in
+                        (Env.bind env id (Addr l), m)) (env', mem') id_lst) in
+      let env = Env.bind env x (Proc (id_lst, e', env')) in
       if (List.length vl) = (List.length id_lst) then
         let mem'' = (List.fold_left2 (fun mem x v ->
-                         let l = lookup_env_loc env'' x in
-                         Mem.store mem l v) mem' id_lst vl) in
-        eval mem'' env'' e'
+                         let l = lookup_env_loc env x in
+                         Mem.store mem l v) mem id_lst vl) in
+        eval mem'' env e'
       else raise (Error "InvalidArg")
-      (*List.nth lst n*)
     | CALLR (f, yl) ->
-      let (xl, e, env') = lookup_env_proc env f in
-      let env'' = Env.bind (List.fold_left2 (fun env' x y ->
-                    let l = lookup_env_proc env y in
-                    Env.bind env' x l) env' xl yl)
-                    f (Proc (xl, e, env')) in
+      let (xl, e, fenv) = lookup_env_proc env f in
+      if (List.length yl) = (List.length xl) then
+      let env'' = Env.bind (List.fold_left2 (fun (env': env) x y ->
+                    let l = lookup_env_loc env y in
+                    Env.bind env' x (Addr l)) fenv xl yl)
+                    f (Proc (xl, e, fenv)) in
       eval mem env'' e
+      else raise (Error "InvalidArg")
     | RECORD [] -> (Unit, mem)
     | RECORD rl ->
       let vl = [] in
@@ -309,7 +309,7 @@ struct
                         (fun (env, mem) (id, e) ->
                         let (l, m) = Mem.alloc mem in
                         (Env.bind env id (Addr l), m))
-                        (Env.empty, mem') id_lst) in
+                        (Env.empty, mem') rl) in
       let mem_r = List.fold_left2 (fun mem (id, e) v ->
                           let l = lookup_env_loc recenv id in
                           Mem.store mem l v) mem_r rl vl in
