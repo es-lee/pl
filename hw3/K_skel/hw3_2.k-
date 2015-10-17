@@ -1,0 +1,96 @@
+let proc numch1(x) = 1 in
+let proc numch10(x) = x / 10 + 1 in
+
+let proc numch100(x) =
+let i := 0 in
+let n := i * 100 in
+let result := 0 in
+(while (n < x) do
+  (result := (result + numch10(x - n));
+  i := (i + 1);
+  n := (i * 100))
+);
+(if (n = x) then
+ (result := (result + 1))
+ else (result));
+result in
+
+let proc numch500(x) =
+let i := 0 in
+let n := i * 500 in
+let result := 0 in
+(while (n < x) do
+  (result := (result + numch100(x - n));
+  i := (i + 1);
+  n := (i * 500))
+);
+(if (n = x) then
+ (result := (result + 1))
+ else (result));
+result in
+
+let proc numch1000(x) =
+let i := 0 in
+let n := i * 1000 in
+let result := 0 in
+(while (n < x) do
+  (result := (result + numch500(x - n));
+  i := (i + 1);
+  n := (i * 1000))
+);
+(if (n = x) then
+ (result := (result + 1))
+ else (result));
+result in
+let proc numch5000(x) =
+let i := 0 in
+let n := i * 5000 in
+let result := 0 in
+(while (n < x) do
+  (result := (result + numch1000(x - n));
+  i := (i + 1);
+  n := (i * 5000))
+);
+(if (n = x) then
+ (result := (result + 1))
+ else (result));
+result in
+let proc numch10000(x) =
+let i := 0 in
+let n := i * 10000 in
+let result := 0 in
+(while (n < x) do
+  (result := (result + numch5000(x - n));
+  i := (i + 1);
+  n := (i * 10000))
+);
+(if (n = x) then
+ (result := (result + 1))
+ else (result));
+result in
+let proc numch50000(x) =
+let i := 0 in
+let n := i * 50000 in
+let result := 0 in
+(while (n < x) do
+  (result := (result + numch10000(x - n));
+  i := (i + 1);
+  n := (i * 50000))
+);
+(if (n = x) then
+ (result := (result + 1))
+ else (result));
+result in
+let proc numch(x) =
+if x < 10 then numch1(x)
+else if x < 100 then numch10(x)
+else if x < 500 then numch100(x)
+else if x < 1000 then numch500(x)
+else if x < 5000 then numch1000(x)
+else if x < 10000 then numch5000(x)
+else if x < 50000 then numch10000(x)
+else numch50000(x)
+in
+let input := 0 in
+read input;
+write (numch(input))
