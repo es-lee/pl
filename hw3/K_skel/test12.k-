@@ -1,0 +1,10 @@
+let proc f (f, g) =
+  if g < 10 then
+    f(99999, g + 1)
+  else
+    100
+in
+
+let proc ident (param) = param in
+
+write (f (99999, 0))

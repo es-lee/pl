@@ -278,14 +278,14 @@ struct
                         (v::vl, mem')) (vl, mem) el in
       let vl = List.rev vl_r in
       let (id_lst, e', env') = lookup_env_proc env x in
-      let (env, mem) = (List.fold_left (fun (env, mem) id ->
+      let (env, mem, ll_r) = (List.fold_left (fun (env, mem, ll_r) id ->
                         let (l, m) = Mem.alloc mem in
-                        (Env.bind env id (Addr l), m)) (env', mem') id_lst) in
+                        (Env.bind env id (Addr l), m, l::ll_r)) (env', mem', []) id_lst) in
       let env = Env.bind env x (Proc (id_lst, e', env')) in
+      let ll = List.rev ll_r in
       if (List.length vl) = (List.length id_lst) then
-        let mem'' = (List.fold_left2 (fun mem x v ->
-                         let l = lookup_env_loc env x in
-                         Mem.store mem l v) mem id_lst vl) in
+        let mem'' = (List.fold_left2 (fun mem l v ->
+                         Mem.store mem l v) mem ll vl) in
         eval mem'' env e'
       else raise (Error "InvalidArg")
     | CALLR (f, yl) ->
