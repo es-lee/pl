@@ -297,6 +297,7 @@ struct
                     Env.bind env' x l) env' xl yl)
                     f (Proc (xl, e, env')) in
       eval mem env'' e
+    | RECORD [] -> (Unit, mem)
     | RECORD rl ->
       let vl = [] in
       let (vl_r, mem') =
@@ -304,9 +305,15 @@ struct
                         let (v, mem') = eval mem env e in
                         (v::vl, mem')) (vl, mem) rl in
       let vl = List.rev vl_r in
-      let ll = List.fold_left (fun ll (id, e) ->
-                               let (l, m) = Mem.alloc
-      (Record (id -> Loc.t), mem)
+      let (recenv, mem_r) = (List.fold_left
+                        (fun (env, mem) (id, e) ->
+                        let (l, m) = Mem.alloc mem in
+                        (Env.bind env id (Addr l), m))
+                        (Env.empty, mem') id_lst) in
+      let mem_r = List.fold_left2 (fun mem (id, e) v ->
+                          let l = lookup_env_loc recenv id in
+                          Mem.store mem l v) mem_r rl vl in
+      (Record (fun (x) -> (lookup_env_loc recenv) x), mem_r)
     | FIELD
     | ASSIGN (x, e) ->
       let (v, mem') = eval mem env e in
