@@ -31,9 +31,6 @@ let rec foo m id eqlist boxlist nboxlist nextid =
       let (b1, elist, blist, nlist, nextid) = (foo m2 nextid elist blist nlist (nextid + 1)) in
       (id, (Unknown a1, Nodevar (Unknown b1, Unknown id))::elist, blist, nlist, nextid)
 
-let _, eqlist, boxlist, _, _ = foo (Branch (Guide ("x", End (NameBox "x")),End StarBox)) 0 [] [] [] 1
-let _, eqlist, boxlist, _, _ = foo (Branch (Guide ("x", End (NameBox "x")), Guide ("y", End (NameBox "y")))) 0 [] [] [] 1
-
 let subst x y =
   let rec s t =
     match t with
@@ -74,19 +71,6 @@ let rec unifyall s eqlist =
   | [] -> s
   | (a, b)::t -> unifyall ((unify (s a) (s b))@s) t
 
-(*
-let rec react f lst =
-  let lst' = List.map f lst in
-  let rec news s l1 l2 =
-    match (l1, l2) with
-    | ([], []) -> s
-    | (Unknown a::t1, Unknown b::t2) ->
-        if a=b then (subst (Unknown a) Barvar)@s
-        else news s t1 t2
-    | (h1::t1, h2::t2) -> news s t1 t2 in
-  if lst = lst' then lst
-  else react (news f lst lst') lst'
-*)
 let reactall s lst =
   let rec react v1 =
     match v1 with
