@@ -87,6 +87,7 @@ let rec keyvarToKey keyv =
   | Barvar -> Bar
   | Nodevar (v1, v2) -> Node (keyvarToKey v1, keyvarToKey v2)
   | Unknown i -> raise (Error "unknown exist")
+
 let rec dedup lst =
   match lst with
   | [] -> lst
