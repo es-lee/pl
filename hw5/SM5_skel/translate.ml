@@ -23,7 +23,7 @@ module Translator = struct
     | K.LESS (e1, e2) -> trans e1 @ trans e2 @ [Sm5.LESS]
     | K.NOT e -> trans e @ [Sm5.NOT]
     | K.ASSIGN (id, exp) -> trans exp @ [Sm5.PUSH (Sm5.Id id); Sm5.STORE; Sm5.PUSH (Sm5.Id id); Sm5.LOAD]
-    | K.SEQ (e1, e2)-> trans e1 @ trans e2
+    | K.SEQ (e1, e2)-> trans e1 @ [Sm5.POP] @ trans e2
     | K.IF (e1, e2, e3) -> trans e1 @ [Sm5.JTR (trans e2, trans e3)]
     | K.WHILE (e1, e2) ->
       let foo = K.LETF ("@", "#", K.IF (K.VAR "#",
