@@ -33,7 +33,8 @@ module Translator = struct
     | K.LETF (f, x, e1, e2) ->
         [Sm5.PUSH (Sm5.Fn (x, [Sm5.BIND f] @ trans e1)); Sm5.BIND f] @ trans e2 @ [Sm5.UNBIND; Sm5.POP]
     | K.CALLV (f, e) -> [Sm5.PUSH (Sm5.Id f); Sm5.PUSH (Sm5.Id f)] @ trans e @ [Sm5.MALLOC; Sm5.CALL]
-    | K.CALLR (f, y)-> [Sm5.PUSH (Sm5.Id f); Sm5.PUSH (Sm5.Id f)]
+    | K.CALLR (f, y)->
+      [Sm5.PUSH (Sm5.Id f); Sm5.PUSH (Sm5.Id f); Sm5.PUSH (Sm5.Id y); Sm5.LOAD; Sm5.PUSH (Sm5.Id y); Sm5.CALL]
     | K.READ x -> [Sm5.GET; Sm5.PUSH (Sm5.Id x); Sm5.STORE; Sm5.PUSH (Sm5.Id x); Sm5.LOAD]
     | K.WRITE e -> trans e @ [Sm5.MALLOC; Sm5.BIND "α"; Sm5.PUSH (Sm5.Id "α"); Sm5.STORE;
                               Sm5.PUSH (Sm5.Id "α"); Sm5.PUSH (Sm5.Id "α"); Sm5.LOAD;
