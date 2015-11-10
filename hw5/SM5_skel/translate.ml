@@ -35,8 +35,8 @@ module Translator = struct
     | K.CALLV (id, exp) -> failwith "Unimplemented"
     | K.CALLR (id1, id2)-> failwith "Unimplemented"
     | K.READ x -> [Sm5.GET; Sm5.PUSH (Sm5.Id x); Sm5.STORE; Sm5.PUSH (Sm5.Id x); Sm5.LOAD]
-    | K.WRITE e -> trans e @ [Sm5.MALLOC; Sm5.BIND "α"; Sm5.PUSH (Sm5.Id "α"); Sm5.Store;
-                              Sm5.PUSH (Sm5.Id "α"); Sm5.PUSH (Sm5.Id "α"); Sm5.Load;
-                              Sm5.PUT; Sm5.Load; Sm5.UNBIND; Sm5.POP]
+    | K.WRITE e -> trans e @ [Sm5.MALLOC; Sm5.BIND "α"; Sm5.PUSH (Sm5.Id "α"); Sm5.STORE;
+                              Sm5.PUSH (Sm5.Id "α"); Sm5.PUSH (Sm5.Id "α"); Sm5.LOAD;
+                              Sm5.PUT; Sm5.LOAD; Sm5.UNBIND; Sm5.POP]
     | _ -> failwith "Unimplemented"
 end
