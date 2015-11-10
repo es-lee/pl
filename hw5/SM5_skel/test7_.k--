@@ -1,0 +1,12 @@
+let s := 0 in
+let i := 0 in
+let n := 0 in
+let init := 1 in
+read n;
+let proc f(x)= (if (n < x)
+    then (unit)
+    else (let id := x in
+      (s := s + id; f(x+1)))) in
+(*    else (id := x; write id; s := s + id; write s; x := x + 1; f(x)) in
+ *)
+((f(init)); (write s))

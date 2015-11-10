@@ -26,7 +26,12 @@ module Translator = struct
     | K.SEQ (e1, e2)-> trans e1 @ trans e2
     | K.IF (e1, e2, e3) -> trans e1 @ [Sm5.JTR (trans e2, trans e3)]
     | K.WHILE (e1, e2) -> trans e1 @ failwith "Unimplemented"
-    | K.FOR (id, e1, e2, e3) -> failwith "Unimplemented"
+    | K.FOR (id, e1, e2, e3) ->
+        let foo = K.LETF ("@", "#", K.IF (K.LESS (e2, K.VAR "#"),
+                                      K.UNIT,
+                                      K.LETV (id, K.VAR "#", K.SEQ (e3, K.CALLV ("@", K.ADD (K.VAR "#", K.NUM 1))))),
+                          K.CALLV ("@", e1)) in
+        trans foo
     | K.LETV (x, e1, e2) ->
       trans e1 @ [Sm5.MALLOC; Sm5.BIND x; Sm5.PUSH (Sm5.Id x); Sm5.STORE] @
       trans e2 @ [Sm5.UNBIND; Sm5.POP]
