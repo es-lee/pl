@@ -185,6 +185,30 @@ struct
       (* TODO : Add the code that marks the reachable locations.
        * let _ = ...
        *)
+      let rec mark loc =
+        reachable_locs := loc::!reachable_locs;
+        match (load loc m) with
+        | L l -> mark l
+        | R lst -> List.iter (fun (_, l') -> mark l') lst
+        | _-> () in
+      let check value =
+        match value with
+        | L loc -> mark loc
+        | R lst -> List.iter (fun (_, l') -> mark l') lst
+        | _-> () in
+      let rec mmark (_, foo) =
+        match foo with
+        | Loc loc -> mark loc
+        | Proc (_, _, env) -> List.iter mmark env in
+      let mmmark a =
+        match a with
+        | V value -> check value
+        | P (_, _, env) -> List.iter mmark env
+        | M (b, evalue) -> mmark (b, evalue)
+        | _ -> () in
+      let _ = List.iter (fun (_, env) -> List.iter mmark env) k in
+      let _ = List.iter mmark e in
+      let _ = List.iter mmmark s  in
       let new_m = List.filter (fun (l, _) -> List.mem l !reachable_locs) m in
       if List.length new_m < mem_limit then
         let _ = loc_id := !loc_id + 1 in
