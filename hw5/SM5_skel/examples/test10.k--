@@ -1,6 +1,7 @@
 let proc f(n) = n := n + 3 in
 let n := 2 in
 let m := n * 2 in
-for m := 0 to n do
+let v := (for m := 0 to n do
     for n := 0 to m do
-            write (f<n>)
+            write (f<n>)) in
+if (v = unit) then write 1111111 else write 22222222

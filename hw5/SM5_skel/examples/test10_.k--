@@ -1,0 +1,11 @@
+let proc f(n) = n := n + 3 in
+let n := 2 in
+let m := n * 2 in
+for m := 0 to n do
+    for n := 0 to m do
+            write 1111111111;
+            write m;
+            write 2222222222;
+            write n;
+            write 3333333333;
+            write (f<n>)

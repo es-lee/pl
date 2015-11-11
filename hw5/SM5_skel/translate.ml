@@ -31,10 +31,10 @@ module Translator = struct
                                     K.UNIT),
                         K.CALLV ("@", e1)) in trans foo
     | K.FOR (id, e1, e2, e3) ->
-      let foo = K.LETF ("@", "#", K.IF (K.LESS (e2, K.VAR "#"),
+      let foo = K.LETV ("%", e2, K.LETF ("@", "#", K.IF (K.LESS (K.VAR "%", K.VAR "#"),
                                     K.UNIT,
-                                    K.LETV (id, K.VAR "#", K.SEQ (e3, K.CALLV ("@", K.ADD (K.VAR "#", K.NUM 1))))),
-                        K.CALLV ("@", e1)) in trans foo
+                                    K.SEQ (K.ASSIGN (id, K.VAR "#"), K.SEQ (e3, K.CALLV ("@", K.ADD (K.VAR "#", K.NUM 1))))),
+                        K.CALLV ("@", e1))) in trans foo
     | K.LETV (x, e1, e2) ->
       trans e1 @ [Sm5.MALLOC; Sm5.BIND x; Sm5.PUSH (Sm5.Id x); Sm5.STORE] @
       trans e2 @ [Sm5.UNBIND; Sm5.POP]
