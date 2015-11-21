@@ -158,13 +158,14 @@ struct
     | VAR x -> (env x, mem)
     | FN (x, e) -> (Closure (Fun (x, e), env), mem)
     | APP (e1, e2) ->
-      let (v1, m'') = eval env m' e1 in
-      let (v2, m') = eval env mem e2 in
+      let (v1, m1) = eval env mem e1 in
+      let (v2, m2) = eval env m1 e2 in
       let (c, env') = getClosure v1 in
       (match c with
       | Fun (x, e) -> eval (env' @+ (x, v2)) m'' e
-      | RecFun (f, x, e) ->  (* TODO : implement this *)
-        failwith "Unimplemented")
+      | RecFun (f, x, e) ->
+        let env'' = (env' @+ (x, v2)) @+ (f, c) in
+        eval env'' m'' e
     | IF (e1, e2, e3) ->
       let (v1, m') = eval env mem e1 in
       eval env m' (if getBool v1 then e2 else e3)
@@ -190,6 +191,13 @@ struct
       let (v, m') = eval env mem e in
       (snd (getPair v), m')
     (* TODO : complete the rest of interpreter *)
+    | LET (b, e) -> failwith "Unimplemented"
+    | MALLOC e -> failwith "Unimplemented"
+    | ASSIGN (e1, e2) -> failwith "Unimplemented"
+    | BANG e -> failwith "Unimplemented - dereference"
+    | SEQ (e1, e2) ->
+        let (v1, m1) -> eval env mem e1 in
+        eval env m1 e2
     | _ -> failwith "Unimplemented"
 
   let emptyEnv = (fun x -> raise (RunError ("unbound id: " ^ x)))
