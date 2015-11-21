@@ -164,7 +164,7 @@ struct
       (match c with
       | Fun (x, e) -> eval (env' @+ (x, v2)) m'' e
       | RecFun (f, x, e) ->
-        let env'' = (env' @+ (x, v2)) @+ (f, c) in
+        let env'' = (env' @+ (x, v2)) @+ (f, v1) in
         eval env'' m'' e
     | IF (e1, e2, e3) ->
       let (v1, m') = eval env mem e1 in
@@ -197,9 +197,17 @@ struct
         let (v1, m') = eval env mem e1 in
         eval (env @+ (x, v1)) m' e2
       | REC (f, x, e1) -> bb) -> eval (env @+ (f, RecFun (f, x, e1))) mem e2
-    | MALLOC e -> failwith "Unimplemented"
-    | ASSIGN (e1, e2) -> failwith "Unimplemented"
-    | BANG e -> failwith "Unimplemented - dereference"
+    | MALLOC e ->
+      let (v, m') = eval env mem e1 in
+      let (newl, m'') = malloc mem in
+      (newl, store m'' (newl, v))
+    | ASSIGN (e1, e2) ->
+      let (l, m') = eval env mem e1 in
+      let (v, m'') = eval env m' e2 in
+      (v, store m'' (l, v))
+    | BANG e ->
+      let (l, m') = eval env mem e in
+      (load m' l, m')
     | SEQ (e1, e2) ->
         let (v1, m1) -> eval env mem e1 in
         eval env m1 e2
