@@ -140,7 +140,7 @@ struct
               | (Bool a, Bool b) -> Bool ((getBool v1) = (getBool v2))
               | (String a, String b) -> Bool ((getString v1) = (getString v2))
               | (Loc a, Loc b) -> Bool ((getLoc v1) = (getLoc v2))
-              | _ -> TypeError "EQ : type mismatch"
+              | _ -> raise (TypeError "EQ : type mismatch")
               )
 
   let rec printValue =
@@ -162,10 +162,10 @@ struct
       let (v2, m2) = eval env m1 e2 in
       let (c, env') = getClosure v1 in
       (match c with
-      | Fun (x, e) -> eval (env' @+ (x, v2)) m'' e
+      | Fun (x, e) -> eval (env' @+ (x, v2)) m2 e
       | RecFun (f, x, e) ->
         let env'' = (env' @+ (x, v2)) @+ (f, v1) in
-        eval env'' m'' e
+        eval env'' m2 e)
     | IF (e1, e2, e3) ->
       let (v1, m') = eval env mem e1 in
       eval env m' (if getBool v1 then e2 else e3)
@@ -196,20 +196,21 @@ struct
       | VAL (x, e1) ->
         let (v1, m') = eval env mem e1 in
         eval (env @+ (x, v1)) m' e2
-      | REC (f, x, e1) -> bb) -> eval (env @+ (f, RecFun (f, x, e1))) mem e2
+      | REC (f, x, e1) ->
+        eval (env @+ (f, Closure (RecFun (f, x, e1), env))) mem e2)
     | MALLOC e ->
-      let (v, m') = eval env mem e1 in
+      let (v, m') = eval env mem e in
       let (newl, m'') = malloc mem in
-      (newl, store m'' (newl, v))
+      (Loc newl, store m'' (newl, v))
     | ASSIGN (e1, e2) ->
       let (l, m') = eval env mem e1 in
       let (v, m'') = eval env m' e2 in
-      (v, store m'' (l, v))
+      (v, store m'' (getLoc l, v))
     | BANG e ->
       let (l, m') = eval env mem e in
-      (load m' l, m')
+      (load m' (getLoc l), m')
     | SEQ (e1, e2) ->
-        let (v1, m1) -> eval env mem e1 in
+        let (v1, m1) = eval env mem e1 in
         eval env m1 e2
     | _ -> failwith "Unimplemented"
 
