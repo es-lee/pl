@@ -191,7 +191,12 @@ struct
       let (v, m') = eval env mem e in
       (snd (getPair v), m')
     (* TODO : complete the rest of interpreter *)
-    | LET (b, e) -> failwith "Unimplemented"
+    | LET (b, e2) ->
+      (match b with
+      | VAL (x, e1) ->
+        let (v1, m') = eval env mem e1 in
+        eval (env @+ (x, v1)) m' e2
+      | REC (f, x, e1) -> bb) -> eval (env @+ (f, RecFun (f, x, e1))) mem e2
     | MALLOC e -> failwith "Unimplemented"
     | ASSIGN (e1, e2) -> failwith "Unimplemented"
     | BANG e -> failwith "Unimplemented - dereference"
