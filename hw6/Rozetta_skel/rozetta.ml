@@ -23,7 +23,7 @@ and trans' : Sm5.command -> Sonata.command = function
   | Sm5.POP :: cmds -> Sonata.POP :: (trans' cmds)
   | Sm5.STORE :: cmds -> Sonata.STORE :: (trans' cmds)
   | Sm5.LOAD :: cmds -> Sonata.LOAD :: (trans' cmds)
-  | Sm5.JTR (c1, c2) :: cmds ->  Sonata.JTR (trans' c1, trans' c2) :: (trans' cmds)
+  | Sm5.JTR (c1, c2) :: cmds ->  Sonata.JTR (trans' c1::cmds, trans' c2::cmds)
   | Sm5.MALLOC :: cmds -> Sonata.MALLOC :: (trans' cmds)
   | Sm5.BOX z :: cmds -> Sonata.BOX z :: (trans' cmds)
   | Sm5.UNBOX id :: cmds -> Sonata.UNBOX id :: (trans' cmds)

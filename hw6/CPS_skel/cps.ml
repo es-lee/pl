@@ -40,8 +40,8 @@ let rec cps' exp =
   (* Constant expressions *)
   | Num n -> Fn (k, App (Var k, Num n))
   | Var x -> Fn (k, App (Var k, Var x))
-  | Fn (x, e) -> Fn (k, App (Var k, Fn (x, e)))
-  | Rec (f, x, e) -> Fn (k, App (Var k, Rec (f, x, e)))
+  | Fn (x, e) -> Fn (k, App (Var k, Fn (x, cps' e)))
+  | Rec (f, x, e) -> Fn (k, App (Var k, Rec (f, x, cps' e)))
   (* Non constant expressions *)
   | App (e1, e2) ->
     let f = new_name () in
@@ -51,28 +51,33 @@ let rec cps' exp =
             Fn (f,
                 App (cps' e2,
                     Fn (v,
-                        App (Var k, App (Var f, Var v))
+                        App (App (Var f, Var v), Var k)
                         )
                     )
                 )
             )
         )
   | Ifz (e1, e2, e3) ->
-    let v = new_name () in
+(*    let v = new_name () in
     let v1 = new_name () in
-    let v2 = new_name () in
     Fn (k,
         App (cps' e1,
             Fn (v,
-                App (cps' e2,
-                     Fn (v1,
-                        App (cps' e3,
-                            Fn (v2,
-                                App (Var k, Ifz (Var v, Var v1, Var v2))
-                                )
-                            )
-                        )
+                App (Var k,
+                     Ifz (Var v, e2, e3)
                      )
+                )
+            )
+        ) *)
+    let v = new_name () in
+    let v2 = new_name () in
+    let v3 = new_name () in
+    Fn (k,
+        App (cps' e1,
+            Fn (v, Ifz (Var v,
+                        App (cps' e2, Fn (v2, App (Var k, Var v2))),
+                        App (cps' e3, Fn (v3, App (Var k, Var v3)))
+                        )
                 )
             )
         )
