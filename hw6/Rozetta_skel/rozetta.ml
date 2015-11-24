@@ -24,7 +24,7 @@ let rec trans_obj : Sm5.obj -> Sonata.obj = function
     @ trans' (command @
     [
       Sm5.PUSH (Sm5.Id "k#");
-      Sm5.PUSH (Sm5.Val Unit);
+      Sm5.PUSH (Sm5.Val Sm5.Unit);
       Sm5.MALLOC;
       Sm5.CALL
       (* call k *)
