@@ -46,10 +46,8 @@ and trans' : Sm5.command -> Sonata.command = function
   | Sm5.GET ::cmds -> Sonata.GET :: (trans' cmds)
   | Sm5.PUT ::cmds -> Sonata.PUT :: (trans' cmds)
   | Sm5.CALL :: cmds ->
-    [ Sonata.MALLOC;
+    [
       Sonata.BIND "l#";
-      Sonata.PUSH (Sonata.Id "l#");
-      Sonata.STORE;
       Sonata.MALLOC;
       Sonata.BIND "v#";
       Sonata.PUSH (Sonata.Id "v#");
@@ -62,7 +60,6 @@ and trans' : Sm5.command -> Sonata.command = function
       Sonata.PUSH (Sonata.Id "v#");
       Sonata.LOAD;
       Sonata.PUSH (Sonata.Id "l#");
-      Sonata.LOAD;
 
       Sonata.CALL
       (*
