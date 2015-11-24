@@ -27,11 +27,13 @@ let rec trans_obj : Sm5.obj -> Sonata.obj = function
       Sm5.BIND "tmp#";
       Sm5.PUSH (Sm5.Id "tmp#");
       Sm5.STORE;
-
-      Sm5.MALLOC;
       Sm5.PUSH (Sm5.Id "tmp#");
       Sm5.LOAD;
+
       Sm5.PUSH (Sm5.Id "k#");
+      Sm5.PUSH (Sm5.Id "tmp#");
+      Sm5.LOAD;
+      Sm5.MALLOC;
       Sm5.CALL
       (* call k *)
     ]) in
