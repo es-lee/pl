@@ -62,7 +62,7 @@ and trans' : Sm5.command -> Sonata.command = function
       Sonata.STORE;
       Sonata.BIND "f#";
 
-      Sonata.PUSH (trans_obj (Sm5.Fn ("x#", cmds)));
+      Sonata.PUSH (Sonata.Fn ("x#", Sonata.POP::trans' cmds));
 
       Sonata.PUSH (Sonata.Id "f#");
       Sonata.PUSH (Sonata.Id "v#");
