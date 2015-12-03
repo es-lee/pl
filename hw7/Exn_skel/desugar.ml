@@ -10,7 +10,20 @@ let count = ref 0
 
 let new_name () =
   let _ = count := !count + 1 in
-  "x_" ^ (string_of_int !count)
+  "galaxy_" ^ (string_of_int !count)
+
+let rec alpha_conv e subs =
+  match e with
+  | Num n -> Num n
+  | Var x -> (try Var (List.assoc x subs) with Not_found -> Var x)
+  | Fn (arg, body) ->
+      let x = new_name () in
+      Fn (x, alpha_conv body (arg, x)::subs)
+  | App (fn, arg) -> App (alpha_conv fn subs, alpha_conv arg subs)
+  | If (cond, t, f) -> If (alpha_conv cond subs, alpha_conv t subs, alpha_conv f subs)
+  | Equal (e1, e2) -> Equal (alpha_conv e1 subs, alpha_conv e2 subs)
+  | Raise exp -> Raise (alpha_conv exp subs)
+  | Handle (exp, i, exp2) -> Handle (alpha_conv exp subs, i, alpha_conv exp2 subs)
 
 (* TODO : Implement this function *)
 let rec cps (e: xexp): xexp =
@@ -86,4 +99,4 @@ let removeExn (e: xexp): xexp =
   let x = new_name () in
   let magic = Fn (x, Num 201511) in
   let k = Fn ("#x", Var "#x") in
-  App (App (cps e, k), magic)
+  App (App (cps (alpha_conv e []), k), magic)
