@@ -18,6 +18,8 @@
                     ("fn", FN);
                     ("raise", RAISE);
                     ("handle", HANDLE);
+                    ("let", LET);
+                    ("in", IN);
                   ]
  let s2int = function "" -> raise (Lex_err("illegal number token"))
            | s -> if ('~' = String.get s 0) then

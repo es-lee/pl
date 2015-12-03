@@ -22,7 +22,7 @@ parser.cmi: parser.mli
 parser.cmo: parser.ml parser.cmi
 	ocamlc -c parser.ml
 
-main.cmo : main.ml xexp.cmo desugar.cmo
+main.cmo : main.ml xexp.cmo desugar.cmo parser.cmo
 	ocamlc -c main.ml
 
 lexer.cmo: lexer.ml

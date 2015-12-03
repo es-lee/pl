@@ -25,7 +25,7 @@ type result =
   | Val of value  (* Value *)
   | Exn of int    (* Exception *)
 
-exception Unhandled of string
+exception Unhandled of int
 exception RunError of string
 exception TypeError of string
 
@@ -81,10 +81,7 @@ let rec eval env exp =
     | Val v1 -> Val v1 
     | Exn n' -> if n = n' then eval env e2 else Exn n')
 
-let run : xexp -> value = fun exp -> 
-  match eval emptyEnv exp with
-  | Exn n -> raise (Unhandled ("Exception #" ^ string_of_int n))
-  | Val v -> v
+let run : xexp -> result = fun exp -> eval emptyEnv exp 
 
 let ps = print_string
 let nl = print_newline

@@ -20,6 +20,11 @@ type value =
   | B of bool
   | C of closure
 
-val run : xexp -> value
+type result = 
+  | Val of value  (* Value *)
+  | Exn of int    (* Exception *)
+
+val run : xexp -> result
 val print : xexp -> unit
 val is_sugarless : xexp -> bool
+

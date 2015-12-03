@@ -33,15 +33,17 @@ let main () =
   );
   print_endline "== Running input program with xexp Interpreter ==";
   (match Xexp.run input_pgm with
-  | Xexp.N n -> print_endline (string_of_int n)
-  | _ -> failwith "Program is not evaluated to a number");
+  | Xexp.Exn n -> print_endline ("Unhandled Exception #" ^ string_of_int n)
+  | Xexp.Val (Xexp.N n) -> print_endline (string_of_int n)
+  | Xexp.Val _ -> print_endline "Program is not evaluated to a number");
   if Xexp.is_sugarless desugared_pgm then 
     print_endline "[Valid] Exception sugar removed successfully" 
   else
     print_endline "[Invalid] Exception sugar is NOT removed";
   print_endline "== Running converted program with xexp Interpreter ==";
   (match Xexp.run desugared_pgm with
-  | Xexp.N n -> print_endline (string_of_int n)
-  | _ -> failwith "Program is not evaluated to a number")
+  | Xexp.Exn n -> print_endline ("Unhandled Exception #" ^ string_of_int n)
+  | Xexp.Val (Xexp.N n) -> print_endline (string_of_int n)
+  | Xexp.Val _ -> print_endline "Program is not evaluated to a number")
 
 let _ = main ()
