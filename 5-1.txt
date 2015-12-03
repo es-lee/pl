@@ -1,0 +1,83 @@
+2.0
+----
+let 
+ val x = malloc 1
+in
+ (x = x)
+end
+----
+TA_Result(Bool(true))
+====
+2.0
+----
+(1 = malloc 1)
+----
+TA_Exception
+====
+2.0
+----
+("asd" = "asd")
+----
+TA_Result(Bool(true))
+====
+2.0
+----
+((1, 1) = (1, 1))
+----
+TA_Exception
+====
+3.0
+----
+let 
+ rec lsum = fn x => 
+   if (x = 0) then 
+    0
+   else
+    (x + lsum (x - 1))
+ rec godiag = fn x => 
+   if (x = 0) then 
+    0
+   else
+    (lsum x + godiag (x - 1))
+in
+ godiag (lsum 5)
+end
+----
+TA_Result(Num(680))
+====
+3.0
+----
+let rec f = fn x => 
+   (if (x = 0) then 
+    0
+   else
+    (x + (f (x - 1))))
+ val v = f
+ rec f = fn x => 2
+in
+ v 10
+end
+----
+TA_Result(Num(55))
+====
+3.0
+----
+let 
+ val x = (malloc (1, 2), 3)
+in
+ x.1 := (4, 5);
+ (!(x.1)).2
+end
+----
+TA_Result(Num(5))
+====
+3.0
+----
+let val k = malloc 2 in
+ (fn y => fn z => (!y) z) 
+  (malloc (fn x => x := (!x + 1))) k;
+ (!k)
+end
+----
+TA_Result(Num(3))
+====

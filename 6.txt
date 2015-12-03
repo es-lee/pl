@@ -1,0 +1,137 @@
+4.0
+----
+let 
+ rec foo = fn f => fn x => fn y => 
+     f x y
+in
+ foo (fn x => fn y => (x + y)) 1 2;
+ foo (fn x => fn y => (x = true)) true 2
+end
+----
+TA_Result(TyBool)
+====
+5.0
+----
+let 
+ val f1 = fn x => x
+ val foo = fn f => fn x => f f1 x
+in
+ f1 true;
+ foo f1 "sad"
+end
+----
+TA_Result(TyString)
+====
+5.0
+----
+let 
+ val f1 = fn x => x.1
+ val f2 = fn f => fn op => fn x => op (f x)
+in
+ f2 f1 (fn x => (x + 1)) (1, true);
+ f2 f1 (fn x => (x = "asd")) ("zxc", 1)
+end
+----
+TA_Result(TyBool)
+====
+4.0
+----
+let 
+ val w = fn x => write(x)
+in
+ w 1;
+ w "asd"
+end
+----
+TA_Result(TyString)
+====
+4.0 (* list2.m (07) *)
+----
+let 
+ val cons = fn x => fn y => fn m => (m x) y
+ val car = fn z => z (fn p => fn q => p)
+ val cdr = fn z => z (fn p => (fn q => p))
+in
+ (car (car (cons ((cons 1) 2) 3)), cdr (car (cons ((cons 1) 2) 3)) )
+end
+----
+TA_Result(TyPair(TyInt,TyInt))
+====
+4.0 (* ski.m (07) *)
+----
+let 
+ val i = fn x => x
+ val k = fn x => fn y => x
+ val s = fn x => fn y => fn z => (x z) (y z)
+in
+ (((s (k (s i))) ((s (k k)) i)) true) (fn x => (x or false))
+end
+----
+TA_Result(TyBool)
+====
+4.0 (* imperative.m(07) *)
+----
+let 
+ val c = malloc fn x => 
+    x
+in
+ c := fn x => 
+  (1 + x);
+ !c true
+end
+----
+TA_Exception
+====
+4.0 (* imperative2.m(07) *)
+----
+let 
+ val f = fn x => malloc x
+ val a = f 10
+ val b = f "pl"
+ val c = f true
+in
+ a := (!a + 1);
+ b := "hw7";
+ c := (!c or false)
+end
+----
+TA_Result(TyBool)
+====
+8.0
+----
+let 
+ val f = fn x => 
+   x
+in
+ f 1;
+ f true
+end
+----
+TA_Result(TyBool)
+====
+4.0
+----
+let 
+ val f = fn x => 
+   write(x)
+in
+ f 1;
+ f (1, 2)
+end
+----
+TA_Exception
+====
+4.0
+----
+let 
+ val f = fn x => fn y => 
+    (x = y)
+in
+ f 1 2;
+ f fn x => 
+  x fn x => 
+  x
+end
+----
+TA_Exception
+====
