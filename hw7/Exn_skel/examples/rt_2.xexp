@@ -1,0 +1,4 @@
+let throw = fn n => raise n in
+let foo = (fn f => (fn a => if a = 10 then a else (f 22))) in
+let g = (fn b => (foo throw b) handle 22 30) in
+(g 9) handle 33 20

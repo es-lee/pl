@@ -1,0 +1,4 @@
+let f = (fn a => if (fn i => i) (10 = 10) then raise a else raise 0) in
+let g = (fn b => raise 20) in
+let h = (fn c => (if (f c) = (g c) then 1 else 2) handle 20 21) in
+(h 10) handle 10 11

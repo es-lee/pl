@@ -1,0 +1,11 @@
+let empty_map = fn x => raise 0 in
+let add = fn m => fn k => fn v =>
+  (fn x => if x = k then v else m x)
+in
+let find = fn m => fn x => m x in
+let m = add empty_map 1 40 in
+let m = add m 2 50 in
+let m = add m 5 30 in
+let m = add m 2 70 in
+let m = add m 3 60 in
+(find m 6) handle 0 99

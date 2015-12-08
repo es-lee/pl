@@ -1,0 +1,5 @@
+let eq = fn x => fn y => x = y in
+let throw = fn n => if (eq 1 1) then raise n else n in
+let f = fn a => if (throw a) then (1 = 2) = 3 else (a 10) in
+let g = fn b => (f b) handle 41 42 in
+(g 43) handle 43 44

@@ -1,0 +1,3 @@
+let f = (fn a => if a = 5 then 50 else raise 66) in
+let g = (fn b => (f b) handle 77 100) in
+(g 8) handle 66 (if (f 5) = 50 then 100 else 200)

@@ -18,7 +18,7 @@ let rec alpha_conv e subs =
   | Var x -> (try Var (List.assoc x subs) with Not_found -> Var x)
   | Fn (arg, body) ->
       let x = new_name () in
-      Fn (x, alpha_conv body (arg, x)::subs)
+      Fn (x, alpha_conv body ((arg, x)::subs))
   | App (fn, arg) -> App (alpha_conv fn subs, alpha_conv arg subs)
   | If (cond, t, f) -> If (alpha_conv cond subs, alpha_conv t subs, alpha_conv f subs)
   | Equal (e1, e2) -> Equal (alpha_conv e1 subs, alpha_conv e2 subs)

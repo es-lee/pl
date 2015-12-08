@@ -1,0 +1,8 @@
+let f = (fn a => raise a) in
+let g = (fn b => if (f 15) = 20 then b else 0) in
+let h =
+  (fn c =>
+    (if c = 4 then (f 0) else (raise (g 5))) handle 10 100
+  )
+in
+(h 5) handle 20 200

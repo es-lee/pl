@@ -1,0 +1,6 @@
+let throw = fn n => (raise n) (10) in
+let f = fn a => if a = 1 then raise 100 else a in
+let g = fn b => (if 1 = (throw b) then 2 else 3) handle 10 (f 1) in
+let h = fn c => ((fn i => i) (throw c)) handle 20 (throw 777) in
+let k = fn d => (g d) handle 100 (h (f 20)) in
+(k 10) handle 777 55

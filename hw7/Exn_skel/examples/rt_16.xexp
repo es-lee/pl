@@ -1,0 +1,4 @@
+let fail = fn x => (raise x) (1 = 2) in
+let f = fn x => fn y => (fail y) handle 70 (raise x) in
+let g = fn x => fn z => (f 50 z) handle 60 x in
+(g 60 70)
