@@ -155,9 +155,9 @@ let rec expansive (exp:M.exp) =
 
 let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
   match exp with
-  | M.CONST (S s) -> unify typ TString
-  | M.CONST (N n) -> unify typ TInt
-  | M.CONST (B b) -> unify typ TBool
+  | M.CONST (M.S s) -> unify typ TString
+  | M.CONST (M.N n) -> unify typ TInt
+  | M.CONST (M.B b) -> unify typ TBool
   | M.VAR id ->
     let type_scheme = List.assoc id tenv in
     (match type_scheme with
@@ -174,13 +174,12 @@ let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
     s2 @@ s1
   | M.APP (fn, arg) ->
     let b = TVar (new_var ()) in
-    let s1 = foo tenv fn (make_subst b typ) in
+    let s1 = foo tenv fn (TFun (b, typ)) in
     let tenv = subst_env s1 tenv in
     let s2 = foo tenv arg (s1 b) in
     s2 @@ s1
   | M.LET (M.REC (f, x, e1), e2) ->  empty_subst (* TODO *)
-  | M.LET (M.VAL (x, e1), e2) ->
-
+  | M.LET (M.VAL (x, e1), e2) ->  empty_subst (* TODO *)
   | M.IF (cond, etrue, efalse) ->
     let s = foo tenv cond TBool in
     let tenv = subst_env s tenv in
@@ -188,8 +187,8 @@ let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let tenv = subst_env s tenv in
     let s = (foo tenv efalse (s typ)) @@ s in
     s
-  | M.BOP (ADD, eleft, eright)
-  | M.BOP (SUB, eleft, eright) ->
+  | M.BOP (M.ADD, eleft, eright)
+  | M.BOP (M.SUB, eleft, eright) ->
     let s = unify typ TInt in
     let tenv = subst_env s tenv in
     let s1 = foo tenv eleft TInt in
@@ -197,8 +196,8 @@ let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let tenv = subst_env s tenv in
     let s1 = foo tenv eright TInt in
     s1 @@ s
-  | M.BOP (AND, eleft, eright)
-  | M.BOP (OR, eleft, eright) ->
+  | M.BOP (M.AND, eleft, eright)
+  | M.BOP (M.OR, eleft, eright) ->
     let s = unify typ TBool in
     let tenv = subst_env s tenv in
     let s1 = foo tenv eleft TBool in
@@ -206,7 +205,7 @@ let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let tenv = subst_env s tenv in
     let s1 = foo tenv eright TBool in
     s1 @@ s
-  | M.BOP (EQ, eleft, eright) -> empty_subst (* TODO *)
+  | M.BOP (M.EQ, eleft, eright) -> empty_subst (* TODO *)
   | M.READ -> unify typ TInt
   | M.WRITE exp ->  empty_subst (* TODO *)
   | M.MALLOC exp ->
