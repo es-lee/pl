@@ -131,6 +131,26 @@ let rec unify (t1:typ) (t2:typ) : (typ -> typ) =
     if t1 = t2 then empty_subst
     else raise (M.TypeError "unify failed 2")
 
+let rec expansive (exp:M.exp) =
+  match exp with
+  | M.CONST const -> false
+  | M.VAR id -> false
+  | M.FN (id, exp) -> expansive exp
+  | M.APP (fn, arg) -> true
+  | M.LET (M.REC (f, x, e1), e2) -> expansive e1 || expansive e2
+  | M.LET (M.VAL (x, e1), e2) -> expansive e1 || expansive e2
+  | M.IF (cond, etrue, efalse) -> expansive cond || expansive etrue || expansive efalse
+  | M.BOP (bop, eleft, eright) -> expansive eleft || expansive eright
+  | M.READ -> false
+  | M.WRITE exp -> expansive exp
+  | M.MALLOC exp -> true
+  | M.ASSIGN (e1, e2) -> expansive e1 || expansive e2
+  | M.BANG exp -> expansive exp
+  | M.SEQ (e1, e2) -> expansive e1 || expansive e2
+  | M.PAIR (eleft, eright) -> expansive eleft || expansive eright
+  | M.FST exp -> expansive exp
+  | M.SND exp -> expansive exp
+
 (* TODO : Implement this function *)
 let check : M.exp -> M.typ =
   raise (M.TypeError "Type Checker Unimplemented")
