@@ -16,6 +16,8 @@ type typ =
   | TLoc of typ
   | TFun of typ * typ
   | TVar of var
+  | Twrite (* const: int, bool string *)
+  | Tequal (* const + loc *)
   (* Modify, or add more if needed *)
 
 type typ_scheme =
@@ -151,6 +153,121 @@ let rec expansive (exp:M.exp) =
   | M.FST exp -> expansive exp
   | M.SND exp -> expansive exp
 
-(* TODO : Implement this function *)
-let check : M.exp -> M.typ =
-  raise (M.TypeError "Type Checker Unimplemented")
+let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
+  match exp with
+  | M.CONST (S s) -> unify typ TString
+  | M.CONST (N n) -> unify typ TInt
+  | M.CONST (B b) -> unify typ TBool
+  | M.VAR id ->
+    let type_scheme = List.assoc id tenv in
+    (match type_scheme with
+    | SimpleTyp t -> unify typ t
+    | GenTyp (alphas, t) ->
+      let GenTyp (betas, t) = subst_scheme empty_subst type_scheme in
+      unify typ t)
+  | M.FN (id, exp) ->
+    let b1 = TVar (new_var ()) in
+    let b2 = TVar (new_var ()) in
+    let s1 = unify typ (TFun (b1, b2)) in
+    let tenv = (id, SimpleTyp (s1 b1))::(subst_env s1 tenv) in
+    let s2 = foo tenv exp (s1 b2) in
+    s2 @@ s1
+  | M.APP (fn, arg) ->
+    let b = TVar (new_var ()) in
+    let s1 = foo tenv fn (make_subst b typ) in
+    let tenv = subst_env s1 tenv in
+    let s2 = foo tenv arg (s1 b) in
+    s2 @@ s1
+  | M.LET (M.REC (f, x, e1), e2) ->  empty_subst (* TODO *)
+  | M.LET (M.VAL (x, e1), e2) ->
+
+  | M.IF (cond, etrue, efalse) ->
+    let s = foo tenv cond TBool in
+    let tenv = subst_env s tenv in
+    let s = (foo tenv etrue (s typ)) @@ s in
+    let tenv = subst_env s tenv in
+    let s = (foo tenv efalse (s typ)) @@ s in
+    s
+  | M.BOP (ADD, eleft, eright)
+  | M.BOP (SUB, eleft, eright) ->
+    let s = unify typ TInt in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv eleft TInt in
+    let s = s1 @@ s in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv eright TInt in
+    s1 @@ s
+  | M.BOP (AND, eleft, eright)
+  | M.BOP (OR, eleft, eright) ->
+    let s = unify typ TBool in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv eleft TBool in
+    let s = s1 @@ s in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv eright TBool in
+    s1 @@ s
+  | M.BOP (EQ, eleft, eright) -> empty_subst (* TODO *)
+  | M.READ -> unify typ TInt
+  | M.WRITE exp ->  empty_subst (* TODO *)
+  | M.MALLOC exp ->
+    let b = TVar (new_var ()) in
+    let s = unify typ (TLoc b) in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv exp (s b) in
+    s1 @@ s
+  | M.ASSIGN (e1, e2) ->
+    let s1 = foo tenv e1 (TLoc typ) in
+    let tenv = subst_env s1 tenv in
+    let s2 = foo tenv e2 typ in
+    s2 @@ s1
+  | M.BANG exp -> foo tenv exp (TLoc typ)
+  | M.SEQ (e1, e2) ->
+    let b = TVar (new_var ()) in
+    let s1 = foo tenv e1 b in
+    let tenv = subst_env s1 tenv in
+    let s2 = foo tenv e2 typ in
+    s2 @@ s1
+  | M.PAIR (eleft, eright) ->
+    let bleft = TVar (new_var ()) in
+    let bright = TVar (new_var ()) in
+    let s = unify typ (TPair (bleft, bright)) in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv eleft (s bleft) in
+    let s = s1 @@ s in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv eright (s bright) in (* bright?? *)
+    s1 @@ s
+  | M.FST exp ->
+    let b2 = TVar (new_var ()) in
+(*    let b2 = TVar (new_var ()) in
+    let s = unify typ b1 in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv exp (TPair ((s b1), (s b2))) in
+    s1 @@ s
+*)
+    let s1 = foo tenv exp (TPair (typ, b2)) in
+    s1
+  | M.SND exp ->
+    let b1 = TVar (new_var ()) in
+    let b2 = TVar (new_var ()) in
+    let s = unify typ b2 in
+    let tenv = subst_env s tenv in
+    let s1 = foo tenv exp (TPair ((s b1), (s b2))) in
+    s1 @@ s
+
+let rec toMtyp (typ:typ) : M.typ =
+  match typ with
+  | TInt -> M.TyInt
+  | TBool -> M.TyBool
+  | TString -> M.TyString
+  | TPair (t1, t2) -> M.TyPair (toMtyp t1, toMtyp t2)
+  | TLoc typ -> M.TyLoc (toMtyp typ)
+  | TFun (t1, t2) -> raise (M.TypeError "final type is TFun")
+  | TVar v -> raise (M.TypeError "final type is TVar")
+  | Twrite
+  | Tequal -> raise (M.TypeError "final type is Twrite/Tequal")
+
+let check (exp:M.exp) : M.typ =
+  let initial_type = TVar (new_var ()) in
+  let s = foo [] exp initial_type in
+  toMtyp (s initial_type)
