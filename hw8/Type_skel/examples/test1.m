@@ -5,4 +5,3 @@ let val f = fn x => x in
 end
 
 (* Result : (int, bool) *)
-
