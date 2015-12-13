@@ -135,7 +135,7 @@ let rec expansive (exp:M.exp) =
   match exp with
   | M.CONST const -> false
   | M.VAR id -> false
-  | M.FN (id, exp) -> expansive exp
+  | M.FN (id, exp) -> false
   | M.APP (fn, arg) -> true
   | M.LET (M.REC (f, x, e1), e2) -> expansive e1 || expansive e2
   | M.LET (M.VAL (x, e1), e2) -> expansive e1 || expansive e2
