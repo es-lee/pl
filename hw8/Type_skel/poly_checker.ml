@@ -178,8 +178,26 @@ let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let tenv = subst_env s1 tenv in
     let s2 = foo tenv arg (s1 b) in
     s2 @@ s1
-  | M.LET (M.REC (f, x, e1), e2) ->  empty_subst (* TODO *)
-  | M.LET (M.VAL (x, e1), e2) ->  empty_subst (* TODO *)
+  | M.LET (M.REC (f, x, e1), e2) ->
+    let b = TVar (new_var ()) in
+    let tenv = (f, generalize tenv b)::tenv in
+    let s = foo tenv (M.FN (x, e1)) b in
+    let tenv = subst_env s tenv in
+    let tenv = (f, generalize tenv (s b))::tenv in
+    let s = (foo tenv e2 (s typ)) @@ s in
+    s
+  | M.LET (M.VAL (x, e1), e2) ->
+    let expansive = expansive e1 in
+    let b = TVar (new_var ()) in
+    let s = foo tenv e1 b in
+    let tenv = (subst_env s tenv) in
+    let tenv =
+      if expansive then
+        (x, SimpleTyp (s b))::tenv
+      else
+        (x, generalize tenv (s b))::tenv in
+    let s = (foo tenv e2 (s typ)) @@ s in
+    s
   | M.IF (cond, etrue, efalse) ->
     let s = foo tenv cond TBool in
     let tenv = subst_env s tenv in
@@ -217,14 +235,14 @@ let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
   | M.ASSIGN (e1, e2) ->
     let s1 = foo tenv e1 (TLoc typ) in
     let tenv = subst_env s1 tenv in
-    let s2 = foo tenv e2 typ in
+    let s2 = foo tenv e2 (s1 typ) in
     s2 @@ s1
   | M.BANG exp -> foo tenv exp (TLoc typ)
   | M.SEQ (e1, e2) ->
     let b = TVar (new_var ()) in
     let s1 = foo tenv e1 b in
     let tenv = subst_env s1 tenv in
-    let s2 = foo tenv e2 typ in
+    let s2 = foo tenv e2 (s1 typ) in
     s2 @@ s1
   | M.PAIR (eleft, eright) ->
     let bleft = TVar (new_var ()) in
