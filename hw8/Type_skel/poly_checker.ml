@@ -153,13 +153,13 @@ let make_subst : var -> typ -> subst = fun x t ->
     | TCvar (x', Equal) ->
       if (x = x') then
       (match t with
-      | TVar _ -> raise (M.TypeError "fuck you")
+      | TVar a -> TCvar (a, Equal)
       | _ -> t)
       else t'
     | TCvar (x', Write) ->
       if (x = x') then
       (match t with
-      | TVar _ -> raise (M.TypeError "fuck you")
+      | TVar a-> TCvar (a, Write)
       | _ -> t)
       else t'
     | TPair (t1, t2) -> TPair (subs t1, subs t2)

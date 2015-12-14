@@ -1,9 +1,9 @@
-(* Polymorphism with ASSIGN *)
+(* Polymorphic toy 38 (type error) *)
 
-let val print = fn x => 
-  (write x; malloc x)
+let rec f = fn x =>
+  (f (malloc true); if x = 0 then x else (x + (f (x - 1))))
 in
-  (print 3) := (malloc 4) := 5
+  (f 5)
 end
 
-(* Reseult : type error *)
+(* Result : type error *)
