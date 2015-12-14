@@ -8,6 +8,10 @@ open M
 
 type var = string
 
+type cons =
+  | Equal
+  | Write
+
 type typ =
   | TInt
   | TBool
@@ -16,8 +20,7 @@ type typ =
   | TLoc of typ
   | TFun of typ * typ
   | TVar of var
-  | Twrite (* const: int, bool string *)
-  | Tequal (* const + loc *)
+  | TCvar of var * cons
   (* Modify, or add more if needed *)
 
 type typ_scheme =
@@ -47,6 +50,7 @@ let rec ftv_of_typ : typ -> var list = function
   | TLoc t -> ftv_of_typ t
   | TFun (t1, t2) ->  union_ftv (ftv_of_typ t1) (ftv_of_typ t2)
   | TVar v -> [v]
+  | TCvar (v, _) -> [v]
 
 let ftv_of_scheme : typ_scheme -> var list = function
   | SimpleTyp t -> ftv_of_typ t
@@ -77,6 +81,8 @@ let make_subst : var -> typ -> subst = fun x t ->
   let rec subs t' =
     match t' with
     | TVar x' -> if (x = x') then t else t'
+    | TCvar (x', Equal) -> if (x = x') then t else t'
+    | TCvar (x', Write) -> if (x = x') then t else t'
     | TPair (t1, t2) -> TPair (subs t1, subs t2)
     | TLoc t'' -> TLoc (subs t'')
     | TFun (t1, t2) -> TFun (subs t1, subs t2)
@@ -125,7 +131,22 @@ let rec unify (t1:typ) (t2:typ) : (typ -> typ) =
     if TVar v = t2 then empty_subst
     else if not (inside v t2) then (make_subst v t2)
     else raise (M.TypeError "unify failed 1")
-  | (typ, TVar v) -> unify (TVar v) typ
+  | (typ, TVar v) -> unify t2 t1
+  | (TCvar (v, Equal), typ) ->
+    (match typ with
+    | TInt | TBool | TString | TLoc _ -> make_subst v typ
+    | TCvar (_, Write) -> make_subst v typ
+    | TCvar (_, Equal) -> make_subst v typ
+    |_ -> raise (M.TypeError "unify failed 3")
+    )
+  | (typ, TCvar (v, Equal)) -> unify t2 t1
+  | (TCvar (v, Write), typ) ->
+    (match typ with
+    | TInt | TBool | TString -> make_subst v typ
+    | TCvar (_, Write) -> make_subst v typ
+    |_ -> raise (M.TypeError "unify failed 3")
+    )
+  | (typ, TCvar (v, Write)) -> unify t2 t1
   | (TPair (a, b), TPair (c, d)) -> unify_p (a, b) (c, d)
   | (TLoc typ, TLoc typ') -> unify typ typ'
   | (TFun (a, b), TFun (c, d)) -> unify_p (a, b) (c, d)
@@ -153,7 +174,7 @@ let rec expansive (exp:M.exp) =
   | M.FST exp -> expansive exp
   | M.SND exp -> expansive exp
 
-let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
+let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
   match exp with
   | M.CONST (M.S s) -> unify typ TString
   | M.CONST (M.N n) -> unify typ TInt
@@ -170,106 +191,118 @@ let rec foo (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let b2 = TVar (new_var ()) in
     let s1 = unify typ (TFun (b1, b2)) in
     let tenv = (id, SimpleTyp (s1 b1))::(subst_env s1 tenv) in
-    let s2 = foo tenv exp (s1 b2) in
+    let s2 = online tenv exp (s1 b2) in
     s2 @@ s1
   | M.APP (fn, arg) ->
     let b = TVar (new_var ()) in
-    let s1 = foo tenv fn (TFun (b, typ)) in
+    let s1 = online tenv fn (TFun (b, typ)) in
     let tenv = subst_env s1 tenv in
-    let s2 = foo tenv arg (s1 b) in
+    let s2 = online tenv arg (s1 b) in
     s2 @@ s1
   | M.LET (M.REC (f, x, e1), e2) ->
     let b = TVar (new_var ()) in
     let tenv = (f, generalize tenv b)::tenv in
-    let s = foo tenv (M.FN (x, e1)) b in
+    let s = online tenv (M.FN (x, e1)) b in
     let tenv = subst_env s tenv in
     let tenv = (f, generalize tenv (s b))::tenv in
-    let s = (foo tenv e2 (s typ)) @@ s in
+    let s = (online tenv e2 (s typ)) @@ s in
     s
   | M.LET (M.VAL (x, e1), e2) ->
     let expansive = expansive e1 in
     let b = TVar (new_var ()) in
-    let s = foo tenv e1 b in
+    let s = online tenv e1 b in
     let tenv = (subst_env s tenv) in
     let tenv =
       if expansive then
         (x, SimpleTyp (s b))::tenv
       else
         (x, generalize tenv (s b))::tenv in
-    let s = (foo tenv e2 (s typ)) @@ s in
+    let s = (online tenv e2 (s typ)) @@ s in
     s
   | M.IF (cond, etrue, efalse) ->
-    let s = foo tenv cond TBool in
+    let s = online tenv cond TBool in
     let tenv = subst_env s tenv in
-    let s = (foo tenv etrue (s typ)) @@ s in
+    let s = (online tenv etrue (s typ)) @@ s in
     let tenv = subst_env s tenv in
-    let s = (foo tenv efalse (s typ)) @@ s in
+    let s = (online tenv efalse (s typ)) @@ s in
     s
   | M.BOP (M.ADD, eleft, eright)
   | M.BOP (M.SUB, eleft, eright) ->
     let s = unify typ TInt in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv eleft TInt in
+    let s1 = online tenv eleft TInt in
     let s = s1 @@ s in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv eright TInt in
+    let s1 = online tenv eright TInt in
     s1 @@ s
   | M.BOP (M.AND, eleft, eright)
   | M.BOP (M.OR, eleft, eright) ->
     let s = unify typ TBool in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv eleft TBool in
+    let s1 = online tenv eleft TBool in
     let s = s1 @@ s in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv eright TBool in
+    let s1 = online tenv eright TBool in
     s1 @@ s
-  | M.BOP (M.EQ, eleft, eright) -> empty_subst (* TODO *)
+  | M.BOP (M.EQ, eleft, eright) ->
+    let cvar = TCvar (new_var (), Equal) in
+    let s = unify typ TBool in
+    let tenv = subst_env s tenv in
+    let s = (online tenv eleft (s cvar)) @@ s in
+    let tenv = subst_env s tenv in
+    let s = (online tenv eright (s cvar)) @@ s in
+    s
   | M.READ -> unify typ TInt
-  | M.WRITE exp ->  empty_subst (* TODO *)
+  | M.WRITE exp ->
+    let cvar = TCvar (new_var (), Write) in
+    let s = unify typ cvar in
+    let tenv = subst_env s tenv in
+    let s = (online tenv exp (s cvar)) @@ s in
+    s
   | M.MALLOC exp ->
     let b = TVar (new_var ()) in
     let s = unify typ (TLoc b) in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv exp (s b) in
+    let s1 = online tenv exp (s b) in
     s1 @@ s
   | M.ASSIGN (e1, e2) ->
-    let s1 = foo tenv e1 (TLoc typ) in
+    let s1 = online tenv e1 (TLoc typ) in
     let tenv = subst_env s1 tenv in
-    let s2 = foo tenv e2 (s1 typ) in
+    let s2 = online tenv e2 (s1 typ) in
     s2 @@ s1
-  | M.BANG exp -> foo tenv exp (TLoc typ)
+  | M.BANG exp -> online tenv exp (TLoc typ)
   | M.SEQ (e1, e2) ->
     let b = TVar (new_var ()) in
-    let s1 = foo tenv e1 b in
+    let s1 = online tenv e1 b in
     let tenv = subst_env s1 tenv in
-    let s2 = foo tenv e2 (s1 typ) in
+    let s2 = online tenv e2 (s1 typ) in
     s2 @@ s1
   | M.PAIR (eleft, eright) ->
     let bleft = TVar (new_var ()) in
     let bright = TVar (new_var ()) in
     let s = unify typ (TPair (bleft, bright)) in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv eleft (s bleft) in
+    let s1 = online tenv eleft (s bleft) in
     let s = s1 @@ s in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv eright (s bright) in (* bright?? *)
+    let s1 = online tenv eright (s bright) in (* bright?? *)
     s1 @@ s
   | M.FST exp ->
     let b2 = TVar (new_var ()) in
 (*    let b2 = TVar (new_var ()) in
     let s = unify typ b1 in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv exp (TPair ((s b1), (s b2))) in
+    let s1 = online tenv exp (TPair ((s b1), (s b2))) in
     s1 @@ s
 *)
-    let s1 = foo tenv exp (TPair (typ, b2)) in
+    let s1 = online tenv exp (TPair (typ, b2)) in
     s1
   | M.SND exp ->
     let b1 = TVar (new_var ()) in
     let b2 = TVar (new_var ()) in
     let s = unify typ b2 in
     let tenv = subst_env s tenv in
-    let s1 = foo tenv exp (TPair ((s b1), (s b2))) in
+    let s1 = online tenv exp (TPair ((s b1), (s b2))) in
     s1 @@ s
 
 let rec toMtyp (typ:typ) : M.typ =
@@ -281,10 +314,9 @@ let rec toMtyp (typ:typ) : M.typ =
   | TLoc typ -> M.TyLoc (toMtyp typ)
   | TFun (t1, t2) -> raise (M.TypeError "final type is TFun")
   | TVar v -> raise (M.TypeError "final type is TVar")
-  | Twrite
-  | Tequal -> raise (M.TypeError "final type is Twrite/Tequal")
+  | TCvar _-> raise (M.TypeError "final type is TCvar")
 
 let check (exp:M.exp) : M.typ =
   let initial_type = TVar (new_var ()) in
-  let s = foo [] exp initial_type in
+  let s = online [] exp initial_type in
   toMtyp (s initial_type)
