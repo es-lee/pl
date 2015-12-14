@@ -1,7 +1,7 @@
-4.0
+42
 ----
-let 
- rec foo = fn f => fn x => fn y => 
+let
+ rec foo = fn f => fn x => fn y =>
      f x y
 in
  foo (fn x => fn y => (x + y)) 1 2;
@@ -10,9 +10,9 @@ end
 ----
 TA_Result(TyBool)
 ====
-5.0
+43
 ----
-let 
+let
  val f1 = fn x => x
  val foo = fn f => fn x => f f1 x
 in
@@ -22,9 +22,9 @@ end
 ----
 TA_Result(TyString)
 ====
-5.0
+44
 ----
-let 
+let
  val f1 = fn x => x.1
  val f2 = fn f => fn op => fn x => op (f x)
 in
@@ -34,9 +34,9 @@ end
 ----
 TA_Result(TyBool)
 ====
-4.0
+45
 ----
-let 
+let
  val w = fn x => write(x)
 in
  w 1;
@@ -45,21 +45,22 @@ end
 ----
 TA_Result(TyString)
 ====
-4.0 (* list2.m (07) *)
+46 (* list2.m (07) *)
 ----
-let 
+let
  val cons = fn x => fn y => fn m => (m x) y
  val car = fn z => z (fn p => fn q => p)
  val cdr = fn z => z (fn p => (fn q => p))
 in
- (car (car (cons ((cons 1) 2) 3)), cdr (car (cons ((cons 1) 2) 3)) )
+ (car (car (cons ((cons 1) 2) 3)),
+  cdr (car (cons ((cons 1) 2) 3)) )
 end
 ----
 TA_Result(TyPair(TyInt,TyInt))
 ====
-4.0 (* ski.m (07) *)
+47 4.0 (* ski.m (07) *)
 ----
-let 
+let
  val i = fn x => x
  val k = fn x => fn y => x
  val s = fn x => fn y => fn z => (x z) (y z)
@@ -69,22 +70,22 @@ end
 ----
 TA_Result(TyBool)
 ====
-4.0 (* imperative.m(07) *)
+48 4.0 (* imperative.m(07) *)
 ----
-let 
- val c = malloc fn x => 
+let
+ val c = malloc fn x =>
     x
 in
- c := fn x => 
+ c := fn x =>
   (1 + x);
  !c true
 end
 ----
 TA_Exception
 ====
-4.0 (* imperative2.m(07) *)
+49 4.0 (* imperative2.m(07) *)
 ----
-let 
+let
  val f = fn x => malloc x
  val a = f 10
  val b = f "pl"
@@ -97,10 +98,10 @@ end
 ----
 TA_Result(TyBool)
 ====
-8.0
+50 8.0
 ----
-let 
- val f = fn x => 
+let
+ val f = fn x =>
    x
 in
  f 1;
@@ -109,10 +110,10 @@ end
 ----
 TA_Result(TyBool)
 ====
-4.0
+51 4.0
 ----
-let 
- val f = fn x => 
+let
+ val f = fn x =>
    write(x)
 in
  f 1;
@@ -121,15 +122,15 @@ end
 ----
 TA_Exception
 ====
-4.0
+52 4.0
 ----
-let 
- val f = fn x => fn y => 
+let
+ val f = fn x => fn y =>
     (x = y)
 in
  f 1 2;
- f fn x => 
-  x fn x => 
+ f fn x =>
+  x fn x =>
   x
 end
 ----
