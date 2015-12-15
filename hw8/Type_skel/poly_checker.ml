@@ -219,11 +219,11 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
     s2 @@ s1
   | M.LET (M.REC (f, x, e1), e2) ->
     let b = TVar (new_var ()) in
-    let tenv = (f, SimpleTyp b)::tenv in
+    let tenv' = (f, SimpleTyp b)::tenv in (* sound *)
 (*
-    let tenv = (f, generalize tenv b)::tenv in
+    let tenv = (f, generalize tenv b)::tenv in (* unound *)
 *)
-    let s = online tenv (M.FN (x, e1)) b in
+    let s = online tenv' (M.FN (x, e1)) b in
     let tenv = subst_env s tenv in
     let tenv = (f, generalize tenv (s b))::tenv in
     let s = (online tenv e2 (s typ)) @@ s in
