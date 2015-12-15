@@ -339,10 +339,10 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let _ = deb "typ : " in
     let _ = prt typ in
     let b = TVar (new_var ()) in
-(*
     let tenv = (f, SimpleTyp b)::tenv in
-*)
+(*
     let tenv = (f, generalize tenv b)::tenv in
+*)
     let s = online tenv (M.FN (x, e1)) b in
     let tenv = subst_env s tenv in
     let tenv = (f, generalize tenv (s b))::tenv in
