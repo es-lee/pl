@@ -286,7 +286,12 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let _ = call ("[Var]" ^ id)  in
     let _ = deb "typ : " in
     let _ = prt typ in
-    let type_scheme = List.assoc id tenv in
+    let type_scheme =
+      try
+        List.assoc id tenv
+      with
+        Not_found -> raise (M.TypeError "unbound variable")
+    in
     let s =
     (match type_scheme with
     | SimpleTyp t -> unify typ t
@@ -334,6 +339,9 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let _ = deb "typ : " in
     let _ = prt typ in
     let b = TVar (new_var ()) in
+(*
+    let tenv = (f, SimpleTyp b)::tenv in
+*)
     let tenv = (f, generalize tenv b)::tenv in
     let s = online tenv (M.FN (x, e1)) b in
     let tenv = subst_env s tenv in
