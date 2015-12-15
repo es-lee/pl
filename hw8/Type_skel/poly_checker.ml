@@ -29,75 +29,6 @@ type typ_scheme =
 
 type typ_env = (M.id * typ_scheme) list
 
-
-(* for DEBUG *)
-let debug = true
-
-exception DO_YOURSELF
-
-(* stack indentation level *)
-let cnt = ref 0
-let inc () = cnt := !cnt + 1
-let dec () = cnt := !cnt - 1
-
-let print_indent () =
-  let rec pp i =
-    if i <= 1 then ()
-    else let _ = print_string " | " in pp (i - 1)
-  in let _ = pp !cnt in print_string " "
-
-(* push/pop call stack *)
-let call str =
-  if debug then
-    let _ = inc () in
-    let _ = print_indent () in
-    print_string (str ^ "\n")
-  else ()
-let ret str =
-  if debug then
-    let _ = print_indent () in
-    let _ = print_string (str ^ "\n") in
-    dec ()
-  else ()
-
-(* print debug message *)
-let deb str =
-  if debug then
-    let _ = print_indent () in
-    print_string ("* " ^ str)
-  else ()
-let prt : typ -> unit =
-  let rec iter : typ -> unit =
-    fun t ->
-      match t with
-      | TInt -> print_string "Int"
-      | TBool -> print_string "Bool"
-      | TString -> print_string "String"
-      | TPair (t1, t2) ->
-          let _ = print_string "(" in
-          let _ = iter t1 in
-          let _ = print_string ", " in
-          let _ = iter t2 in
-          print_string ")"
-      | TFun (t1, t2) ->
-          let _ = print_string "(" in
-          let _ = iter t1 in
-          let _ = print_string " → " in
-          let _ = iter t2 in
-          print_string ")"
-      | TLoc t ->
-          let _ = iter t in
-          print_string "_Loc"
-      | TVar v -> print_string ("Var " ^ v)
-      | TCvar (v, Equal) -> print_string ("Equal " ^ v)
-      | TCvar (v, Write) -> print_string ("Write " ^ v)
-    in
-  fun t ->
-    if debug then
-      let _ = iter t in
-      print_string "\n"
-    else ()
-
 let count = ref 0
 
 let new_var () =
@@ -256,88 +187,37 @@ let rec expansive (exp:M.exp) =
 let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
   match exp with
   | M.CONST (M.S s) ->
-      let _ = call "[String]" in
-      let _ = deb "typ : " in
-      let _ = prt typ in
-      let s =
       unify typ TString
-      in
-      let _ = ret "[String]" in
-      s
   | M.CONST (M.N n) ->
-      let _ = call "[Int]" in
-      let _ = deb "typ : " in
-      let _ = prt typ in
-      let s =
       unify typ TInt
-      in
-      let _ = ret "[Int]" in
-      s
   | M.CONST (M.B b) ->
-      let _ = call "[Bool]" in
-      let _ = deb "typ : " in
-      let _ = prt typ in
-      let s =
       unify typ TBool
-      in
-      let _ = ret "[Bool]" in
-      s
   | M.VAR id ->
-    let _ = call ("[Var]" ^ id)  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let type_scheme =
       try
         List.assoc id tenv
       with
         Not_found -> raise (M.TypeError "unbound variable")
     in
-    let s =
     (match type_scheme with
     | SimpleTyp t -> unify typ t
     | GenTyp (alphas, t) ->
       let GenTyp (betas, t) = subst_scheme empty_subst type_scheme in
       unify typ t)
-    in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret ("[Var]" ^ id) in
-    s
   | M.FN (id, exp) ->
-    let _ = call ("[Fn]" ^ id)  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let b1 = TVar (new_var ()) in
     let b2 = TVar (new_var ()) in
     let s1 = unify typ (TFun (b1, b2)) in
     let tenv = (id, SimpleTyp (s1 b1))::(subst_env s1 tenv) in
     let s2 = online tenv exp (s1 b2) in
-    let s =
     s2 @@ s1
-    in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret ("[Fn]" ^ id) in
-    s
   | M.APP (fn, arg) ->
-    let _ = call "[App]" in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let b = TVar (new_var ()) in
     let s1 = online tenv fn (TFun (b, typ)) in
     let tenv = subst_env s1 tenv in
     let s2 = online tenv arg (s1 b) in
-    let s =
     s2 @@ s1
-    in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret ("[App]") in
-    s
   | M.LET (M.REC (f, x, e1), e2) ->
-    let _ = call "[Letrec]" in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let b = TVar (new_var ()) in
     let tenv = (f, SimpleTyp b)::tenv in
 (*
@@ -347,14 +227,8 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let tenv = subst_env s tenv in
     let tenv = (f, generalize tenv (s b))::tenv in
     let s = (online tenv e2 (s typ)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Letrec]" in
     s
   | M.LET (M.VAL (x, e1), e2) ->
-    let _ = call ("[Let value]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let expansive = expansive e1 in
     let b = TVar (new_var ()) in
     let s = online tenv e1 b in
@@ -365,138 +239,66 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
       else
         (x, generalize tenv (s b))::tenv in
     let s = (online tenv e2 (s typ)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Let value]" in
     s
   | M.IF (cond, etrue, efalse) ->
-    let _ = call ("[If]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let s = online tenv cond TBool in
     let tenv = subst_env s tenv in
     let s = (online tenv etrue (s typ)) @@ s in
     let tenv = subst_env s tenv in
     let s = (online tenv efalse (s typ)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[If]" in
     s
   | M.BOP (M.ADD, eleft, eright)
   | M.BOP (M.SUB, eleft, eright) ->
-    let _ = call ("[Add/Sub]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let s = unify typ TInt in
     let tenv = subst_env s tenv in
     let s = (online tenv eleft TInt) @@ s in
     let tenv = subst_env s tenv in
     let s = (online tenv eright TInt) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Add/Sub]" in
     s
   | M.BOP (M.AND, eleft, eright)
   | M.BOP (M.OR, eleft, eright) ->
-    let _ = call ("[And/Or]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let s = unify typ TBool in
     let tenv = subst_env s tenv in
     let s = (online tenv eleft TBool) @@ s in
     let tenv = subst_env s tenv in
     let s = (online tenv eright TBool) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[And/Or]" in
     s
   | M.BOP (M.EQ, eleft, eright) ->
-    let _ = call ("[Equal]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let cvar = TCvar (new_var (), Equal) in
     let s = unify typ TBool in
     let tenv = subst_env s tenv in
     let s = (online tenv eleft (s cvar)) @@ s in
     let tenv = subst_env s tenv in
     let s = (online tenv eright (s cvar)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Equal]" in
     s
   | M.READ ->
-    let _ = call ("[Read]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
-    let s =
     unify typ TInt
-    in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Read]" in
-    s
   | M.WRITE exp ->
-    let _ = call ("[Write]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let cvar = TCvar (new_var (), Write) in
     let s = unify typ cvar in
     let tenv = subst_env s tenv in
     let s = (online tenv exp (s cvar)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Write]" in
     s
   | M.MALLOC exp ->
-    let _ = call ("[Malloc]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let b = TVar (new_var ()) in
     let s = unify typ (TLoc b) in
     let tenv = subst_env s tenv in
     let s = (online tenv exp (s b)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Write]" in
     s
   | M.ASSIGN (e1, e2) ->
-    let _ = call ("[Assign]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let s = online tenv e1 (TLoc typ) in
     let tenv = subst_env s tenv in
     let s = (online tenv e2 (s typ)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Assign]" in
     s
   | M.BANG exp ->
-    let _ = call ("[Bang]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
-    let s =
     online tenv exp (TLoc typ)
-    in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Bang]" in
-    s
   | M.SEQ (e1, e2) ->
-    let _ = call ("[Seq]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let b = TVar (new_var ()) in
     let s = online tenv e1 b in
     let tenv = subst_env s tenv in
     let s = (online tenv e2 (s typ)) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Seq]" in
     s
   | M.PAIR (eleft, eright) ->
-    let _ = call ("[Pair]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let bleft = TVar (new_var ()) in
     let bright = TVar (new_var ()) in
     let s = unify typ (TPair (bleft, bright)) in
@@ -504,14 +306,8 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
     let s = (online tenv eleft (s bleft)) @@ s in
     let tenv = subst_env s tenv in
     let s = (online tenv eright (s bright)) @@ s in (* bright?? *)
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Pair]" in
     s
   | M.FST exp ->
-    let _ = call ("[Fst]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let b2 = TVar (new_var ()) in
 (*    let b2 = TVar (new_var ()) in
     let s = unify typ b1 in
@@ -520,22 +316,13 @@ let rec online (tenv:typ_env) (exp:M.exp) (typ:typ)=
     s1 @@ s
 *)
     let s = online tenv exp (TPair (typ, b2)) in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Fst]" in
     s
   | M.SND exp ->
-    let _ = call ("[Snd]")  in
-    let _ = deb "typ : " in
-    let _ = prt typ in
     let b1 = TVar (new_var ()) in
     let b2 = TVar (new_var ()) in
     let s = unify typ b2 in
     let tenv = subst_env s tenv in
     let s = (online tenv exp (TPair ((s b1), (s b2)))) @@ s in
-    let _= deb "typ := " in
-    let _= prt (s typ) in
-    let _ = ret "[Snd]" in
     s
 
 let rec toMtyp (typ:typ) : M.typ =
